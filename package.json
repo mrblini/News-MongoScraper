@@ -1,0 +1,31 @@
+{
+  "name": "News-MongoScraper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "^0.19.0",
+    "cheerio": "^1.0.0-rc.3",
+    "express": "^4.17.1",
+    "express-handlebars": "^3.1.0",
+    "mongodb": "^3.3.0-beta2",
+    "mongoose": "^5.6.6",
+    "nodemon": "^1.19.1",
+    "package-json": "^6.5.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pablodiazt/News-MongoScraper.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pablodiazt/News-MongoScraper/issues"
+  },
+  "homepage": "https://github.com/pablodiazt/News-MongoScraper#readme"
+}
