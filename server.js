@@ -10,7 +10,7 @@ var cheerio = require("cheerio");
 // Require all models
 var db = require("./models");
 
-var PORT = process.env.PORT || 3030;
+var PORT = process.env.PORT || 6060;
 
 var app = express();
 
@@ -46,7 +46,7 @@ app.get("/scrape", function (req, res) {
 			result.url = "https://www.nytimes.com/" + $(element).find("a").attr("href");
 			result.excerpt = $(element).find("p").text();
 			result.favorite = false;
-			
+
 			db.Headline.create(result)
 				.then(function (newsdb) {
 					returnData.push(result);
@@ -60,3 +60,85 @@ app.get("/scrape", function (req, res) {
 	//console.log(returnData);
 	//res.json(returnData)
 })
+
+//route to list all scraped Article
+// Route for getting all Articles from the db
+app.get("/articles", function (req, res) {
+	// TODO: Finish the route so it grabs all of the articles
+	db.Article.find({})
+		.then(function (newsdb) {
+			res.json(newsdb);
+		})
+		.catch(function (err) {
+			res.json(err);
+		});
+});
+
+//route to save an article
+app.post("/articles/:id", function (req, res) {
+	console.log("Updating: " + req.params.id);
+	db.Article.findOneAndUpdate({
+			_id: req.params.id
+		}, {
+			favorite: true
+		}, {
+			new: true
+		})
+		.catch(function (err) {
+			// If an error occurred, send it to the client
+			res.json(err);
+		});
+	res.status(200);
+})
+
+//route to list all saved articles
+app.get("/articles/saved", function (req, res) {
+	console.log("In saved route!");
+	// TODO: Finish the route so it grabs all of the articles
+	db.Article.find({
+			favorite: true
+		})
+		.then(function (dbnews) {
+			res.json(dbnews);
+		})
+		.catch(function (err) {
+			res.json(err);
+		});
+});
+
+//route to save a note on a saved article
+
+
+//route to edit a note
+
+
+//route to  delete a note
+
+
+//route to unsave a note
+app.post("/favorite/remove/:id", function (req, res) {
+	console.log("Updating: " + req.params.id);
+	db.Article.findOneAndUpdate({
+			_id: req.params.id
+		}, {
+			favorite: false
+		}, {
+			new: true
+		})
+		.catch(function (err) {
+			// If an error occurred, send it to the client
+			res.json(err);
+		});
+	res.status(200);
+})
+
+//catch all route
+app.get("*", function (req, res) {
+	res.redirect("index");
+})
+
+
+// Start the server
+app.listen(PORT, function () {
+	console.log("App running on port " + PORT + "!");
+});
