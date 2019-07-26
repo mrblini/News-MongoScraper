@@ -29,6 +29,7 @@ var MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/newsdb";
 mongoose.connect(MONGODB_URI);
 
 
+console.log("sdflhskdfhsdkljfhaskdjh")
 
 // -------------------- Routes
 
