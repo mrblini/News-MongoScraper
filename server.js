@@ -1,3 +1,4 @@
+// ---------------------------------- PACKAGES:
 var express = require("express");
 var mongoose = require("mongoose");
 const logger = require("morgan");
@@ -8,19 +9,21 @@ var axios = require("axios");
 var cheerio = require("cheerio");
 var exphbs = require('express-handlebars');
 
-// Require all models
+// ----------- Require all models
 var db = require("./models");
 
+// ---------------------------------- CONNECT TO SERVER (EXPRESS):
 var PORT = process.env.PORT || 3000;
 
 var app = express();
 
+// ------------ Handlebars:
 app.engine('handlebars', exphbs({
     defaultLayout: "main"
 }));
 app.set('view engine', 'handlebars');
 
-// Use morgan logger for logging requests
+// ------------- Use MORGAN LOGGER for logging requests:
 app.use(logger("dev"));
 // Parse request body as JSON
 app.use(express.urlencoded({
@@ -30,126 +33,114 @@ app.use(express.json());
 
 app.use(express.static("public"));
 
+// ---------------------------------- CONNECT TO DB (MONGODB):
 var MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/newsdb";
 // mongoose.connect("mongodb://localhost/NewsYouNeed", { useNewUrlParser: true });
 mongoose.connect(MONGODB_URI);
 
 
 
-// ----------------------------------------------- ROUTES
-app.get('/', function (req, res) {
-    db.Article.find({}).then(function(articlesResponse){
-        res.render("index", {articlesResponse});
-    })
-    
+
+
+// -------------------------------------------------- ROUTES
+// ================================ / 'MAIN PAGE'
+app.get('/', function(req, res) {
+    res.render("index");
 })
 
-// ----------------------- SCRAPE DATA
+// ================================ /ARTICLES
+app.get('/articles', function(req, res) {
+    db.Article.find({}).then(function (articlesResponse) {
+        res.render("index", {
+            articlesResponse
+        });
+    })
+})
+
+// ================================ /SCRAPE 
 // Scrape data from NYT and get title, URL and description - place it into the mongodb db
 app.get("/scrape", function (req, res) {
-var result = [];
+    var result = [];
 
-// First, we grab the body of the html with axios
-axios.get("https://www.nytimes.com/section/world").then(function (response) {
-    console.log("===============================")
-    // console.log(response.data);
+    // First, we grab the body of the html with axios
+    axios.get("https://www.nytimes.com/section/world").then(function (response) {
+        console.log("===============================")
+        // console.log(response.data);
 
-    // Then, we load that into cheerio and save it to $ for a shorthand selector
-    var $ = cheerio.load(response.data);
+        // Then, we load that into cheerio and save it to $ for a shorthand selector
+        var $ = cheerio.load(response.data);
 
-    // ------------- TITLE
-    async function makeArray(){
-        $("h2.e1xfvim30").each(function () {
-            var articleObj = {};
-            console.log("===========--------------==========-----");
-            console.log($(this).text());
-            articleObj.title = $(this).text();
-            console.log(articleObj)
-    
-            result.push(articleObj);
-            // console.log(result)
-        });
-    
-        // ------------- DESCRIPTION
-        $("p.e1xfvim31").each(function (i, paragraph) {
-            result[i].description = $(this).text()
-            // console.log(result)
-        })
-    
-        // ------------- LINK
-        $("div.css-4jyr1y").each(function (i, link) {
-            console.log($(this).children("a").attr("href"))
-            result[i].link = $(this).children("a").attr("href")
-            console.log(result)
-        })
-    
-    }
-    // ------------------- POPULATE DB
-    makeArray().then(function(){
-        for (i = 0; i < result.length; i++) {
-            db.Article.create(result[i])
-                .then(function (dbArticle) {
-                    // View the added result in the console
-                    console.log(dbArticle);
-                })
-                .catch(function (err) {
-                    // If an error occurred, log it
-                    console.log(err);
-                });
+        // ------------------- POPULATE ARRAY:
+        async function makeArray() {
+            // ---------------- TITLE
+            $("h2.e1xfvim30").each(function () {
+                console.log("========--------========-----> title:");
+                console.log($(this).text());
+                var articleObj = {};
+                articleObj.title = $(this).text();
+                result.push(articleObj);
+                // console.log(articleObj)
+                // console.log(result)
+            });
+
+            // ---------------- DESCRIPTION
+            $("p.e1xfvim31").each(function (i, paragraph) {
+                console.log("=====-----==---> description:");
+                console.log($(this).text());
+                result[i].description = $(this).text();
+                // console.log(result)
+            })
+
+            // ---------------- LINK
+            $("div.css-4jyr1y").each(function (i, link) {
+                var urlBase = "https://www.nytimes.com";
+                var linkRoute = $(this).children("a").attr("href")
+                var full_url = urlBase + linkRoute;
+                console.log("==============------------------>> link:");
+                console.log(full_url);
+                result[i].link = full_url;
+                // console.log(result)
+            })
+
         }
-    })
+
+        // ----------------------------------------------- POPULATE DB
+        makeArray().then(function () {
+            for (i = 0; i < result.length; i++) {
+                db.Article.create(result[i])
+                    .then(function (dbArticle) {
+                        // View the added result in the console
+                        console.log(dbArticle);
+                    })
+                    .catch(function (err) {
+                        // If an error occurred, log it
+                        console.log(err);
+                    });
+            }
+        })
+    });
+
+    // Send a message to the client
+    res.render("index");
+    // res.send("Scrape Complete");
 });
 
-// Send a message to the client
-res.send("Scrape Complete");
-});
 
 
-//------------------------------------
-// app.get("/scrape", function (req, res) {
-//   var returnData = [];
-//   // Make a request via axios for the news section of `ycombinator`
-//   axios.get("https://www.nytimes.com/section/technology").then(function (response) {
-//     // Then, we load that into cheerio and save it to $ for a shorthand selector
-
-//     console.log("inside axios")
-//     console.log(response.data)
-
-// var $ = cheerio.load(response.data);
-// var result = {};
-// $("article").each(function (i, element) {
-//   result.title = $($(element).find("h2").children()[0]).text();
-//   result.url = "https://www.nytimes.com/" + $(element).find("a").attr("href");
-//   result.excerpt = $(element).find("p").text();
-//   result.favorite = false;
-
-//   db.Headline.create(result)
-//     .then(function (newsdb) {
-//       returnData.push(result);
-//     })
-//     .catch(function (err) {
-//       console.log(err);
-//     })
-// });
-//   })
-//   // Send data
-//   console.log(returnData);
-//   res.json(returnData)
-// })
-
+// ================================ ARTICLES:
 // route to list all scraped Article
 // Route
 // for getting all Articles from the db
-app.get("/articles", function (req, res) {
-    // TODO: Finish the route so it grabs all of the articles
-    db.Article.find({})
-        .then(function (newsdb) {
-            res.json(newsdb);
-        })
-        .catch(function (err) {
-            res.json(err);
-        });
-});
+// app.get("/articles", function (req, res) {
+//     // TODO: Finish the route so it grabs all of the articles
+//     db.Article.find({})
+//         .then(function (newsdb) {
+//             res.json(newsdb);
+//         })
+//         .catch(function (err) {
+//             res.json(err);
+//         });
+// });
 
 //route to save an article
 app.post("/articles/:id", function (req, res) {
@@ -226,9 +217,7 @@ app.listen(PORT, function () {
 
 
 
-// ---------------
-
-// Routes
+// ---------------------------------------- ROUTES
 
 // // Route for getting all Articles from the db
 // app.get("/articles", function(req, res) {
