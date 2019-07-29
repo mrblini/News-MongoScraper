@@ -8,10 +8,12 @@ var ArticleSchema = new Schema({
         unique: true
     },
     link: {
-        type: String
+        type: String,
+        unique: true
     },
     description: {
-        type: String
+        type: String,
+        unique: true
     }
 });
 

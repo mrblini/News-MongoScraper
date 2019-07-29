@@ -48,15 +48,6 @@ app.get('/', function(req, res) {
     res.render("index");
 })
 
-// ================================ /ARTICLES
-app.get('/articles', function(req, res) {
-    db.Article.find({}).then(function (articlesResponse) {
-        res.render("index", {
-            articlesResponse
-        });
-    })
-})
-
 // ================================ /SCRAPE 
 // Scrape data from NYT and get title, URL and description - place it into the mongodb db
 app.get("/scrape", function (req, res) {
@@ -124,6 +115,29 @@ app.get("/scrape", function (req, res) {
     res.render("index");
     // res.send("Scrape Complete");
 });
+
+// ================================ /ARTICLES
+app.get('/articles', function(req, res) {
+    db.Article.find({}).then(function (articlesResponse) {
+        res.render("index", {
+            articlesResponse
+        });
+    })
+})
+
+// ================================ /CLEAR
+app.get('/clear', function(req, res) {
+    db.Article.remove({}).then(function (droppedCollection) {
+        res.render("index", {
+            droppedCollection
+        })
+    })
+})
+
+
+
+
+
 
 
 
