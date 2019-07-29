@@ -38,13 +38,17 @@ mongoose.connect(MONGODB_URI);
 
 // ----------------------------------------------- ROUTES
 app.get('/', function (req, res) {
-    res.render("index");
+    db.Article.find({}).then(function(articlesResponse){
+        res.render("index", {articlesResponse});
+    })
+    
 })
 
 // ----------------------- SCRAPE DATA
 // Scrape data from NYT and get title, URL and description - place it into the mongodb db
 app.get("/scrape", function (req, res) {
 var result = [];
+
 // First, we grab the body of the html with axios
 axios.get("https://www.nytimes.com/section/world").then(function (response) {
     console.log("===============================")
@@ -80,6 +84,7 @@ axios.get("https://www.nytimes.com/section/world").then(function (response) {
         })
     
     }
+    // ------------------- POPULATE DB
     makeArray().then(function(){
         for (i = 0; i < result.length; i++) {
             db.Article.create(result[i])
@@ -93,11 +98,6 @@ axios.get("https://www.nytimes.com/section/world").then(function (response) {
                 });
         }
     })
-
-    // ------------------- POPULATE DB
-
-    // Create a new Article using the `result` object built from scraping
-
 });
 
 // Send a message to the client
