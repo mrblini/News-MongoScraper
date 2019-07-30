@@ -43,12 +43,12 @@ mongoose.connect(MONGODB_URI);
 
 
 // -------------------------------------------------- ROUTES
-// ================================ / 'MAIN PAGE'
+// ========================================== / 'MAIN PAGE'
 app.get('/', function(req, res) {
     res.render("index");
 })
 
-// ================================ /SCRAPE 
+// ========================================== /SCRAPE 
 // Scrape data from NYT and get title, URL and description - place it into the mongodb db
 app.get("/scrape", function (req, res) {
     var result = [];
@@ -95,7 +95,7 @@ app.get("/scrape", function (req, res) {
 
         }
 
-        // ----------------------------------------------- POPULATE DB
+        // ----------------- POPULATE DB
         makeArray().then(function () {
             for (i = 0; i < result.length; i++) {
                 db.Article.create(result[i])
@@ -116,16 +116,36 @@ app.get("/scrape", function (req, res) {
     // res.send("Scrape Complete");
 });
 
-// ================================ /ARTICLES
+// ========================================== /ARTICLES
 app.get('/articles', function(req, res) {
     db.Article.find({}).then(function (articlesResponse) {
-        res.render("index", {
-            articlesResponse
-        });
+        db.Note.find({}).then(notesResponse => {
+            console.log(notesResponse)
+            const newArticles = articlesResponse.map(article => {
+                const {title, link, _id, description} = article;
+                const notes = notesResponse.filter(note => note.articleId === _id);
+
+                return {
+                    title,
+                    link,
+                    _id,
+                    description,
+                    notes
+                }
+            });
+            console.log(newArticles.map(article=>article));
+            res.render("index", {
+                articlesResponse: newArticles,
+            });
+
+        }).
+        catch(err => {
+            res.sendStatus(500);
+        })
     })
 })
 
-// ================================ /CLEAR
+// ========================================== /CLEAR ARTICLES
 app.get('/clear', function(req, res) {
     db.Article.remove({}).then(function (droppedCollection) {
         res.render("index", {
@@ -134,71 +154,8 @@ app.get('/clear', function(req, res) {
     })
 })
 
-
-
-
-
-
-
-
-// ================================ ARTICLES:
-// route to list all scraped Article
-// Route
-// for getting all Articles from the db
-// app.get("/articles", function (req, res) {
-//     // TODO: Finish the route so it grabs all of the articles
-//     db.Article.find({})
-//         .then(function (newsdb) {
-//             res.json(newsdb);
-//         })
-//         .catch(function (err) {
-//             res.json(err);
-//         });
-// });
-
-//route to save an article
-app.post("/articles/:id", function (req, res) {
-    console.log("Updating: " + req.params.id);
-    db.Article.findOneAndUpdate({
-            _id: req.params.id
-        }, {
-            favorite: true
-        }, {
-            new: true
-        })
-        .catch(function (err) {
-            // If an error occurred, send it to the client
-            res.json(err);
-        });
-    res.status(200);
-})
-
-//route to list all saved articles
-app.get("/articles/saved", function (req, res) {
-    console.log("In saved route!");
-    // TODO: Finish the route so it grabs all of the articles
-    db.Article.find({
-            favorite: true
-        })
-        .then(function (dbnews) {
-            res.json(dbnews);
-        })
-        .catch(function (err) {
-            res.json(err);
-        });
-});
-
-//route to save a note on a saved article
-
-
-//route to edit a note
-
-
-//route to  delete a note
-
-
-//route to unsave a note
-app.post("/favorite/remove/:id", function (req, res) {
+// ========================================== route to delete an article
+app.post("/article/remove/:id", function (req, res) {
     console.log("Updating: " + req.params.id);
     db.Article.findOneAndUpdate({
             _id: req.params.id
@@ -214,11 +171,11 @@ app.post("/favorite/remove/:id", function (req, res) {
     res.status(200);
 })
 
-//catch all route
+
+// =========== catch all route
 app.get("*", function (req, res) {
     res.redirect("index");
 })
-
 
 // Start the server
 app.listen(PORT, function () {

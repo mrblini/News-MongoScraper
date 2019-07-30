@@ -20,9 +20,9 @@
 
             </li>
 
-            {{!-- ------------------------ ARTICLES --}}
+            {{!-- ------------------------ SHOW ARTICLES --}}
             <li class="nav-item">
-                <a class="nav-link" href="/articles">Saved Articles</a>
+                <a class="nav-link" href="/articles">Show Articles</a>
             </li>
 
             {{!-- ------------------------ SCRAPE --}}
@@ -82,18 +82,29 @@
 
 
 {{!-- ============================================= ARTICLES PAGE --}}
+
+{{!-- ARTICLES --}}
 {{#each articlesResponse}}
 <div class="articleDisplay">
     <h4>{{title}}</h4>
     <h4>{{link}}</h4>
     <h4>{{description}}</h4>
     <h4>{{this._id}}</h4>
-
 </div>
 
+{{!-- NOTES --}}
+<div class='notes-container'>
+    <ul>
+        {{#each articlesResponse.notes}}
+        <li>{{articlesResponse.notes.body}}</li>
+        {{/each}}
+    </ul>
+</div>
+
+
 <div class="container">
-    <textarea class="comments" type="text" placeholder="comment..."></textarea>
-    <button class="btn">add comment</button>
+    <textarea id='textArea-{{@index}}' data-for="{{this._id}}" class="comments" name="commentTxt" type="text" placeholder="comment..."></textarea>
+    <button data-id='{{@index}}' type="submit" class="btn btn-warning btnComment">add comments</button>
 </div>
 
 <br><br>
